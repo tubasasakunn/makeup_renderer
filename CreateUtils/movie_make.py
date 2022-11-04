@@ -34,11 +34,11 @@ def main(input_path,output_path,model_path,opt,mode=None):
     connect_imgs=[]
     make_dict=torch.load(model_path)
     make=Makeup(imgs[0],imgs[0],opt,name='res')
-    for i,img in enumerate(imgs):
+    for i,img in enumerate(imgs[:4]):
         print(i)
 
         try:
-            makeup_img=np.uint8(make.test(img,make_dict))
+            makeup_img=np.uint8(make.test(img,make_dict)[-1])
         except:
             print("できない")
             makeup_img=img

@@ -81,35 +81,6 @@ class TrimEye():
 
         in_img = cv2.seamlessClone(in_img.astype(np.uint8),self.in_img.astype(np.uint8), mask, point, cv2.NORMAL_CLONE).astype(np.float32)
 
-        '''        
-        face_h,face_w,_=in_eye.shape
-        alpha_x=np.arange(face_w)-face_w/2
-        alpha_y=np.arange(face_h)-face_h/2
-        alpha=np.array(np.meshgrid(alpha_x,alpha_y))
-        alpha=np.max(alpha,axis=0)
-        #alpha=np.sqrt(alpha[0]**2+alpha[1]**2)
-        my=(face_w-2)//4
-        mx=(face_h-2)//4
-        r=min(alpha[my,(face_w-2)//2],alpha[(face_h-2)//2,mx])
-        alpha=alpha/r-1
-        alpha[alpha<0]=0
-        r=min(alpha[0,(face_w-2)//2],alpha[(face_h-2)//2,0])
-        alpha[alpha>r]=r
-        alpha=alpha/alpha.max()
-        alpha=np.dstack((alpha,alpha,alpha))
-        mask[int(self.center[1]-self.y_norm):int(self.center[1]+self.y_norm),int(self.center[0]-self.x_norm):int(self.center[0]+self.x_norm)]=255
-        #point=(int(self.center[0]),int(self.center[1]))
-        #cv2.imwrite("res/reerer.png",self.in_img)
-        #cv2.imwrite("res/reerer1.png",in_img)
-        #in_img=np.clip(in_img,0,255)
-        #self.in_img=np.clip(self.in_img,0,255)
-        #in_img=cv2.seamlessClone(self.in_img,in_img,mask,point,cv2.NORMAL_CLONE)
-        #in_img=np.clip(in_img,0,255)
-        #cv2.imwrite("res/reerer2.png",in_img)
-        #cv2.imwrite("res/reerer3.png",in_img*mask)
-        #in_img=self.in_img*mask+in_img*(1-mask)
-        '''
-
 
         M = cv2.getRotationMatrix2D(self.center, -1*self.angle, 1)
         h, w = in_img.shape[:2]

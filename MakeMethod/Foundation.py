@@ -66,10 +66,6 @@ class Foundation(Base):
         addimg=utils.LAB2RGB(addimg_LAB)
 
         img=self.in_face+alpha*addimg*self.mask
-        
-        from torchvision.utils import save_image
-        save_image(addimg,"burasifand.png")
-        save_image(self.mask,"maskfand.png")
 
         return img
 

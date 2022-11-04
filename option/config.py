@@ -2,7 +2,7 @@ import sys
 import numpy as np
 
 params_name=["start_x","start_y","end_x","end_y","middle_x","middle_y","thickness","RGB","alpha"]
-epoch=300
+epoch=2
 
 class Options(object):
     make_list=["Foundation","Lipstick","Eye","Face"]

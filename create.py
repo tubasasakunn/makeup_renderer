@@ -47,6 +47,8 @@ if __name__ == '__main__':
     if mode=="MakeVideo":
         movie_make.main(str(in_path),str(save_path),str(pt_path),opt)
     elif mode=="test":
+        img_make.main(str(in_path),str(save_path),str(pt_path),opt,"test")
+    elif mode=="test_stroke":
         img_make.main(str(in_path),str(save_path),str(pt_path),opt)
     elif mode=="test_con":
         img_make_con.main(str(in_path),str(save_path),opt)

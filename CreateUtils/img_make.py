@@ -27,4 +27,4 @@ def main(input_path,output_path,model_path,opt,mode='stroke'):
         video.release()
     else:
         makeup_img=np.uint8(make.test(img,make_dict))
-        cv2.imwrite(output_path,makeup_img)
+        cv2.imwrite(output_path,makeup_img[-1])

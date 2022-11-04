@@ -90,10 +90,6 @@ class Eye(Base):
         addimg=utils.LAB2RGB(addimg_LAB)
         img=in_img*(1-stroke_alpha)+stroke_alpha*addimg
 
-        from torchvision.utils import save_image
-        save_image(addimg,"eysburasi.png")
-        save_image(stroke_alpha,"maskEye.png")
-
         return img
 
     def backward(self,img_r,img_l):

@@ -76,8 +76,6 @@ class TrimFace:
     def get_face(self):
         input= 128+60*((self.in_face*self.get_mask)-self.mean)/self.std
         output= 128+60*((self.out_face*self.get_mask)-self.mean)/self.std
-        #return self.in_face*self.get_mask,self.out_face*self.get_mask
-        cv2.imwrite("res.png",input)
 
         return input.astype(np.float32),output.astype(np.float32)
 

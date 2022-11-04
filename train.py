@@ -51,7 +51,7 @@ def single(in_path,out_path,test_path,res_path,opt):
 
     dict,res_img=make.train(opt)
     print("test")
-    img=make.test(test_img,dict)
+    img=make.test(test_img,dict)[-1]
     
     cv2.imwrite(str(res_path/opt.name/"test.png"),img)
 
@@ -76,7 +76,7 @@ def multi(in_path,res_path,opt):
             makeup=Makeup(in_img,out_img,opt,name=str(res_path/p_name))
             params_dict,res_img=makeup.train(opt)
             torch.save(params_dict,str(res_path/p_name/'params.pt'))
-            trans_res_img=makeup.test(trans_in_img,params_dict)
+            trans_res_img=makeup.test(trans_in_img,params_dict)[-1]
             cv2.imwrite(str(res_path/p_name/'in_img.png'),in_img)
             cv2.imwrite(str(res_path/p_name/'out_img.png'),out_img)
             cv2.imwrite(str(res_path/p_name/'res_img.png'),res_img)
@@ -98,7 +98,7 @@ def multi(in_path,res_path,opt):
             makeup=Makeup(in_img,out_img,opt,name=str(res_path/p_name))
             params_dict,res_img=makeup.train(opt)
             torch.save(params_dict,str(res_path/p_name/'params.pt'))
-            trans_res_img=makeup.test(trans_in_img,params_dict)
+            trans_res_img=makeup.test(trans_in_img,params_dict)[-1]
             cv2.imwrite(str(res_path/p_name/'in_img.png'),in_img)
             cv2.imwrite(str(res_path/p_name/'out_img.png'),out_img)
             cv2.imwrite(str(res_path/p_name/'res_img.png'),res_img)
