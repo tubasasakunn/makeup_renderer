@@ -2,3 +2,4 @@ model/
 __pycache__/
 res*/
 test_img/
+*.pth
