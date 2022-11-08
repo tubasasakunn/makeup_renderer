@@ -3,10 +3,10 @@
 
 # 使い方
 
-## 学習（パラメータの最適化）
+## パラメータの最適化
 ### 複数の場合
 ```shell
-python train.py -c option/config.py -m multi -r res_multi_lip -i unit_test
+python makeup_optim.py -c option/config.py -m multi -r res_multi_lip -i unit_test
 ```
 `option/config.py`は設定ファイル．
 `multi`は複数で在ることの指定．
@@ -27,7 +27,7 @@ unit_test
 
 ### 単品の場合
 ```shell
-python train.py -c option/config.py -m single -r res_multi_lip -i unit_test/canmake4/A_in.png -o unit_test/canmake4/A_out.png -t unit_test/canmake4/B_in.png
+python makeup_optim.py -c option/config.py -m single -r res_multi_lip -i unit_test/canmake4/A_in.png -o unit_test/canmake4/A_out.png -t unit_test/canmake4/B_in.png
 ```
 
 単品も複数も出力結果のファイルは以下のようなものにになります．

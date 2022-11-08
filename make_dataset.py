@@ -1,3 +1,4 @@
+import enum
 from unicodedata import name
 from makeup import Makeup
 from utils.trimFace import TrimFace
@@ -8,7 +9,7 @@ import numpy as np
 from pathlib import Path
 from tqdm import tqdm
 
-face_path=Path("training_model/dataset/nonMakeupDataset")
+face_path=Path("dataset/nonMakeupDataset")
 presets=[]
 presets.append([[0.25],[0.4],[0.45],[0.4],[0.35],[0.4],[0.2],[0.2,0.2,0.2],[0.91]])
 presets.append([[0.1],[0.5],[0.3],[0.9],[0.2],[0.8],[0.3],[0.2,0.2,0.2],[0.91]])
@@ -65,15 +66,14 @@ def MakeParams(preset,make_name,right=True,renderMode='powder'):
     return params
 
 
-def make_datasets(name,num):
+def make_datasets(name,num,preset):
     name=Path(name)
     name.mkdir(exist_ok=True) 
     opt = Options()
-    preset=[[0.5],[0.33],[0.5],[0.67],[0.3],[0.5],[0.2],[0.02,0.02,0.1],[0.91]]
     paths=list(face_path.iterdir())
+    random.shuffle(paths)
     for i in tqdm(range(num)):
         try:
-            preset=presets[i%len(presets)]
             make_dict=MakeParams(preset,"Face")
             img_path=paths[i%len(paths)]
             img=cv2.imread(str(img_path))
@@ -86,4 +86,5 @@ def make_datasets(name,num):
             print(paths[i%len(paths)])
 
 if __name__ == '__main__':
-    make_datasets("training_model/dataset/dataset_Face",3000)
+    for i,preset in enumerate(presets):
+        make_datasets("dataset/dataset_Face%d"%(i),1000,preset)

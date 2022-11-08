@@ -1,125 +1,77 @@
-
-import argparse
-from importlib import import_module
-import cv2
-from makeup import Makeup
-from pathlib import Path
-from setproctitle import setproctitle, getproctitle
 import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.utils.data as data
+import torchvision
+from torchvision import models, transforms
+from pathlib import Path
+from torchvision.io import read_image
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--config_path")
-parser.add_argument("-i","--in_path", type=str, default='test_img/canmake2_in.png')
-parser.add_argument("-o","--out_path", type=str, default='test_img/canmake2_out.png')
-parser.add_argument("-t","--test_path", type=str, default='test_img/canmake2_in.png')
-parser.add_argument("-r","--res_path", type=str, default='res')
-parser.add_argument("-m","--mode", type=str, default='single')
-args = parser.parse_args()
 
-p=Path(args.config_path)
-lib=''
-for i in list(p.parts)[:-1]:
-    lib=lib+i+'.'
-lib=lib+p.stem
+def get_model(params_num=11,device="cuda"):
+    net = models.vgg16(pretrained=True)
+    net.classifier[6] = nn.Linear(in_features=4096, out_features=params_num)
+    net=net.to(device)
+    return net
 
-option = import_module(lib)
-opt = option.Options()
-in_path=args.in_path
-out_path=args.out_path
-test_path=args.test_path
-res_path=args.res_path
-mode=args.mode
-setproctitle(opt.name)
-
-def hconcat_resize_min(im_list, interpolation=cv2.INTER_CUBIC):
-    h_min = min(im.shape[0] for im in im_list)
-    im_list_resize = [cv2.resize(im.astype('int32'), (int(im.shape[1] * h_min / im.shape[0]), h_min), interpolation=interpolation) for im in im_list]
-    return cv2.hconcat(im_list_resize)
-
-
-def single(in_path,out_path,test_path,res_path,opt):
-
-
-    res_path=Path(res_path)
-    res_path.mkdir(exist_ok=True) 
-
-    in_img=cv2.imread(in_path)
-    out_img=cv2.imread(out_path)
-    test_img=cv2.imread(test_path)
-    make=Makeup(in_img,out_img,opt,name=str(res_path/opt.name))
-
-    dict,res_img=make.train(opt)
-    print("test")
-    img=make.test(test_img,dict)[-1]
+class Dataset(data.Dataset):
+    def __init__(self, path,device="cuda"):
+        self.paths=list(Path(path).iterdir())
+        self.device=device
+        
+    def __len__(self):
+        return len(self.paths)
     
-    cv2.imwrite(str(res_path/opt.name/"test.png"),img)
+    def str2list(self,moji):
+        moji_list=moji.replace("]","").replace("[","").split(',')
+        float_list=[float(i) for i in moji_list]
+        return float_list
 
+    def __getitem__(self, idx):
+        path=self.paths[idx]
+        params=torch.tensor(self.str2list(str(path.stem)))
+        img=read_image(str(path))/255
+        params=params.to(self.device)
+        img=img.to(self.device)
+        return img,params
 
-def multi(in_path,res_path,opt):
-    imgs_path=Path(in_path)
-    res_path=Path(res_path)
-    res_path.mkdir(exist_ok=True) 
-    files=list(imgs_path.iterdir())
-    print(files)
-    mistakeA=[]
-    mistakeB=[]
-    for p in files:
-        try:
-        #if True:
-            p_name=p.name
-            in_img=cv2.imread(str(p/'A_in.png'))
-            out_img=cv2.imread(str(p/'A_out.png'))
-            trans_in_img=cv2.imread(str(p/'B_in.png'))
-            trans_out_img=cv2.imread(str(p/'B_out.png'))
+def main():
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = "cpu"
+    print("use device is %s"%(device))
+    max_epoch=2000
+    training_data=Dataset("./dataset/dataset_Face",device)
+    test_data=Dataset("./dataset/dataset_Face_test",device)
+    train_dataloader = DataLoader(training_data, batch_size=2, shuffle=True)
+    test_dataloader = DataLoader(test_data, batch_size=2, shuffle=True)
+    net=get_model(11,device)
+    optimizer = optim.Adam(net.parameters(), lr=0.0001)
+    criterion = nn.MSELoss()
+    writer = SummaryWriter("./log")
+    writer_i=0
+    for epoch in range(max_epoch):
+        #train
+        for i,(img,params) in enumerate(train_dataloader):
+            #学習
+            optimizer.zero_grad()
+            predict=net(img)
+            loss = criterion(predict, params)
+            loss.backward()
+            optimizer.step()
 
-            makeup=Makeup(in_img,out_img,opt,name=str(res_path/p_name))
-            params_dict,res_img=makeup.train(opt)
-            torch.save(params_dict,str(res_path/p_name/'params.pt'))
-            trans_res_img=makeup.test(trans_in_img,params_dict)[-1]
-            cv2.imwrite(str(res_path/p_name/'in_img.png'),in_img)
-            cv2.imwrite(str(res_path/p_name/'out_img.png'),out_img)
-            cv2.imwrite(str(res_path/p_name/'res_img.png'),res_img)
-            cv2.imwrite(str(res_path/p_name/'trans_in_img.png'),trans_in_img)
-            cv2.imwrite(str(res_path/p_name/'trans_out_img.png'),trans_out_img)
-            cv2.imwrite(str(res_path/p_name/'trans_res_img.png'),trans_res_img)
-            all=hconcat_resize_min((in_img,out_img,res_img,trans_in_img,trans_out_img,trans_res_img))
-            cv2.imwrite(str(res_path/p_name/'all_img.png'),all)
-        except:
-           mistakeA.append(p)    
-    for p in files:
-        try:
-            p_name=p.name+'_inv'
-            in_img=cv2.imread(str(p/'B_in.png'))
-            out_img=cv2.imread(str(p/'B_out.png'))
-            trans_in_img=cv2.imread(str(p/'A_in.png'))
-            trans_out_img=cv2.imread(str(p/'A_out.png'))
+            #確認用
+            writer_i=writer_i+1
+            writer.add_scalar("loss",loss,writer_i)
+            print("epoch=%d iter=%d loss=%f"%(epoch,i,loss))
 
-            makeup=Makeup(in_img,out_img,opt,name=str(res_path/p_name))
-            params_dict,res_img=makeup.train(opt)
-            torch.save(params_dict,str(res_path/p_name/'params.pt'))
-            trans_res_img=makeup.test(trans_in_img,params_dict)[-1]
-            cv2.imwrite(str(res_path/p_name/'in_img.png'),in_img)
-            cv2.imwrite(str(res_path/p_name/'out_img.png'),out_img)
-            cv2.imwrite(str(res_path/p_name/'res_img.png'),res_img)
-            cv2.imwrite(str(res_path/p_name/'trans_in_img.png'),trans_in_img)
-            cv2.imwrite(str(res_path/p_name/'trans_out_img.png'),trans_out_img)
-            cv2.imwrite(str(res_path/p_name/'trans_res_img.png'),trans_res_img)
-            all=hconcat_resize_min((in_img,out_img,res_img,trans_in_img,trans_out_img,trans_res_img))
-            cv2.imwrite(str(res_path/p_name/'all_img.png'),all)
-        except:
-           mistakeA.append(p)    
+        #test
+        for i,(img,params) in enumerate(test_dataloader):
+            predict=net(img)
+            loss = criterion(predict, params)
+            print("test epoch=%d iter=%d loss=%f"%(epoch,i,loss))
+    writer.close()
 
-
-
-    print(mistakeA,mistakeB)
-
-
-if __name__ == '__main__':    
-
-    if mode=="single":
-        single(in_path,out_path,test_path,res_path,opt)
-    elif mode=="multi":
-        multi(in_path,res_path,opt)
-    else:
-        print("正しくないmode")
+main()
