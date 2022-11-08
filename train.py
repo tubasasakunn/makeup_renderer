@@ -38,15 +38,18 @@ class Dataset(data.Dataset):
         img=img.to(self.device)
         return img,params
 
-def main():
+def main(dataset_path):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = "cpu"
     print("use device is %s"%(device))
     max_epoch=2000
-    training_data=Dataset("./dataset/dataset_Face",device)
-    test_data=Dataset("./dataset/dataset_Face_test",device)
-    train_dataloader = DataLoader(training_data, batch_size=2, shuffle=True)
-    test_dataloader = DataLoader(test_data, batch_size=2, shuffle=True)
+    image_dataset=Dataset(dataset_path,device)
+    train_dataset, valid_dataset = torch.utils.data.random_split(
+    image_dataset, 
+    [int(len(image_dataset)*0.7), int(len(image_dataset)*0.3)]
+)
+    train_dataloader = DataLoader(train_dataset, batch_size=2, shuffle=True)
+    valid_dataloader = DataLoader(valid_dataset, batch_size=2, shuffle=True)
     net=get_model(11,device)
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
@@ -68,10 +71,16 @@ def main():
             print("epoch=%d iter=%d loss=%f"%(epoch,i,loss))
 
         #test
-        for i,(img,params) in enumerate(test_dataloader):
+        for i,(img,params) in enumerate(valid_dataloader):
             predict=net(img)
             loss = criterion(predict, params)
             print("test epoch=%d iter=%d loss=%f"%(epoch,i,loss))
+            
+        
+        if epoch%5==0:
+            torch.save(net.state_dict(),"log/model_last.pth")
+        if epoch%20==0:
+            torch.save(net.state_dict(),"log/model_%05d.pth"%(epoch))
     writer.close()
 
-main()
+main("path_to_dataset")
