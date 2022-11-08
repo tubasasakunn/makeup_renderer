@@ -38,22 +38,25 @@ class Dataset(data.Dataset):
         img=img.to(self.device)
         return img,params
 
-def main(dataset_path):
+def main(dataset_path,max_epoch=2000,name="test"):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device = "cpu"
+    #device = "cpu"
     print("use device is %s"%(device))
-    max_epoch=2000
+
+    name=Path(name)
+    name.mkdir(exist_ok=True) 
+    
     image_dataset=Dataset(dataset_path,device)
     train_dataset, valid_dataset = torch.utils.data.random_split(
     image_dataset, 
-    [int(len(image_dataset)*0.7), int(len(image_dataset)*0.3)]
+    [int(len(image_dataset)*0.7), len(image_dataset)-int(len(image_dataset)*0.7)]
 )
-    train_dataloader = DataLoader(train_dataset, batch_size=2, shuffle=True)
-    valid_dataloader = DataLoader(valid_dataset, batch_size=2, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    valid_dataloader = DataLoader(valid_dataset, batch_size=64, shuffle=True)
     net=get_model(11,device)
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
-    writer = SummaryWriter("./log")
+    writer = SummaryWriter(str(name/"log"))
     writer_i=0
     for epoch in range(max_epoch):
         #train
@@ -78,9 +81,14 @@ def main(dataset_path):
             
         
         if epoch%5==0:
-            torch.save(net.state_dict(),"log/model_last.pth")
+            torch.save(net.state_dict(),str(name/"log"/"model_last.pth"))
         if epoch%20==0:
-            torch.save(net.state_dict(),"log/model_%05d.pth"%(epoch))
+            torch.save(net.state_dict(),str(name/"log"/"model_%05d.pth"%(epoch)))
     writer.close()
-
-main("path_to_dataset")
+if __name__ == '__main__':
+    res=Path("result")
+    res.mkdir(exist_ok=True)
+    dataset_path=Path("dataset")
+    paths=list(dataset_path.iterdir())
+    for path in paths:
+        main(str(path),2000,str(res/path.name))
