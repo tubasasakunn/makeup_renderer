@@ -83,7 +83,7 @@ def main(dataset_path,max_epoch=2000,name="test"):
         if epoch%5==0:
             torch.save(net.state_dict(),str(name/"log"/"model_last.pth"))
         if epoch%20==0:
-            torch.save(net.state_dict(),str(name/"log"/"model_%05d.pth"%(epoch)))
+            torch.save(net.state_dict(),str(name/"log"/"model_%05d.pth")%(epoch))
     writer.close()
 if __name__ == '__main__':
     res=Path("result")
@@ -91,4 +91,5 @@ if __name__ == '__main__':
     dataset_path=Path("dataset")
     paths=list(dataset_path.iterdir())
     for path in paths:
+        print(path)
         main(str(path),2000,str(res/path.name))
