@@ -8,6 +8,29 @@ from pathlib import Path
 from torchvision.io import read_image
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+import model
+
+class BaseModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(256,64,3)
+        self.conv2 = nn.Conv2d(64,32,3)
+        self.pool = nn.MaxPool2d(2, stride=2)
+
+        self.fc1 = nn.Linear(6272, 800)
+        self.fc2 = nn.Linear(800, 120)
+        self.fc3 = nn.Linear(120, 11)
+
+        self.relu = nn.ReLU()
+    
+    def forward(self, x):
+        x=self.pool(self.relu(self.conv1(x)))
+        x=self.pool(self.relu(self.conv2(x)))
+        x = x.view(x.size()[0], -1)
+        x=self.relu(self.fc1(x))
+        x=self.relu(self.fc2(x))
+        x=self.relu(self.fc3(x))
+        return x
 
 
 
@@ -40,7 +63,7 @@ class Dataset(data.Dataset):
 
 def main(dataset_path,max_epoch=2000,name="test"):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    #device = "cpu"
+    device = "cpu"
     print("use device is %s"%(device))
 
     name=Path(name)
@@ -53,7 +76,8 @@ def main(dataset_path,max_epoch=2000,name="test"):
 )
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     valid_dataloader = DataLoader(valid_dataset, batch_size=64, shuffle=True)
-    net=get_model(11,device)
+    psgan_net=model.Generator().to(device)
+    net=BaseModel().to(device)
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
     writer = SummaryWriter(str(name/"log"))
@@ -63,7 +87,8 @@ def main(dataset_path,max_epoch=2000,name="test"):
         for i,(img,params) in enumerate(train_dataloader):
             #学習
             optimizer.zero_grad()
-            predict=net(img)
+            latent=psgan_net(img)#[bacth_size,3,256,256]->[bacth_size,256,64,64]
+            predict=net(latent)#[bacth_size,256,64,64]->[batch_size,11]
             loss = criterion(predict, params)
             loss.backward()
             optimizer.step()
@@ -75,7 +100,8 @@ def main(dataset_path,max_epoch=2000,name="test"):
 
         #test
         for i,(img,params) in enumerate(valid_dataloader):
-            predict=net(img)
+            latent=psgan_net(img)#[bacth_size,3,256,256]->[bacth_size,256,64,64]
+            predict=net(latent)
             loss = criterion(predict, params)
             print("test epoch=%d iter=%d loss=%f"%(epoch,i,loss))
             
@@ -84,6 +110,8 @@ def main(dataset_path,max_epoch=2000,name="test"):
             torch.save(net.state_dict(),str(name/"log"/"model_last.pth"))
         if epoch%20==0:
             torch.save(net.state_dict(),str(name/"log"/"model_%05d.pth")%(epoch))
+
+        
     writer.close()
 if __name__ == '__main__':
     res=Path("result")
