@@ -77,6 +77,7 @@ def main(dataset_path,max_epoch=2000,name="test"):
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     valid_dataloader = DataLoader(valid_dataset, batch_size=64, shuffle=True)
     psgan_net=model.Generator().to(device)
+    psgan_net.load_state_dict(torch.load("model/G.pth"))
     net=BaseModel().to(device)
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
@@ -106,9 +107,9 @@ def main(dataset_path,max_epoch=2000,name="test"):
             print("test epoch=%d iter=%d loss=%f"%(epoch,i,loss))
             
         
-        if epoch%5==0:
+        if epoch%100==0:
             torch.save(net.state_dict(),str(name/"log"/"model_last.pth"))
-        if epoch%20==0:
+        if epoch%200==0:
             torch.save(net.state_dict(),str(name/"log"/"model_%05d.pth")%(epoch))
 
         

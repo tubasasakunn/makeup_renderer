@@ -58,23 +58,27 @@ def main(img,model_path):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     #device = "cpu"
     print("use device is %s"%(device))
-    net=get_model(11,device)
-    net.load_state_dict(torch.load(model_path))
     img=cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img=torch.from_numpy(img.astype(np.float32)).clone()/255
     img=img.permute(2,0,1)
     img=img.unsqueeze(0).to(device)
 
+
+    net=get_model(11,device)
+    net.load_state_dict(torch.load(model_path))
+
+    
     params=net(img)
     params=torch.clamp(params,0,1)
     print(params)
     return params[0].to("cpu").tolist()
 
-if __name__ == '__main__':
+def test():
     params=[]
     
     img=cv2.imread("unit_test/canmake4/B_out.png")
-    img=cv2.imread("dataset/dataset_Face2/[[0.141468523957264], [0.8129193917250117], [0.6393019292692518], [0.8699712122133516], [0.6152468271187818], [0.8362301247366903], [0.2951296628551199], [0.0, 0.5507578991891822, 0.0], [0.911575536226868]].jpg")
+    name="dataset/dataset_Face0/[[0.0], [0.3537876234291369], [0.3622588460836964], [0.4778530871319742], [0.31146555308741997], [0.5771453950847557], [0.2110522184163744], [0.29155154939963956, 0.32051109731979055, 0.0], [1.0]].jpg"
+    img=cv2.imread(name)
     img=PostProcessing(img)
     model_paths=Path("model/Makeup_Model/MultiFace")
     model_paths=list(model_paths.iterdir())
@@ -92,3 +96,15 @@ if __name__ == '__main__':
     make=Makeup(img,img,opt,name='res')
     makeup_img=np.uint8(make.test(img,make_dict))[-1]
     cv2.imwrite("aa.png",makeup_img)
+
+def compire():
+    name="dataset/dataset_Face0/[[0.0], [0.3537876234291369], [0.3622588460836964], [0.4778530871319742], [0.31146555308741997], [0.5771453950847557], [0.2110522184163744], [0.29155154939963956, 0.32051109731979055, 0.0], [1.0]].jpg"
+    img=cv2.imread(name)
+    model_path="model/Makeup_Model/MultiFace/model_last.pth"
+
+
+
+
+if __name__ == '__main__':
+    compile()
+
