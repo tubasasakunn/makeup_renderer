@@ -109,7 +109,7 @@ def main(dataset_path,max_epoch=2000,name="test"):
         
         if epoch%100==0:
             torch.save(net.state_dict(),str(name/"log"/"model_last.pth"))
-        if epoch%200==0:
+        if epoch%500==0:
             torch.save(net.state_dict(),str(name/"log"/"model_%05d.pth")%(epoch))
 
         

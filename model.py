@@ -264,8 +264,8 @@ class Generator(nn.Module):
 
     def forward(self, s):
 
-        if s.ndim != 5:
-            s=s.squeeze(0)
+        #if s.ndim != 5:
+        #    s=s.squeeze(0)
         s = self.pnet_in(s)
 
         # down-sampling
