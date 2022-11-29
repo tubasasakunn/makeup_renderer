@@ -109,11 +109,50 @@ def test():
 
 def compire():
     name="dataset/dataset_Face0/[[0.36956802171659703], [0.5006924544087464], [0.36834583410701216], [0.3904635960359865], [0.24307970985796754], [0.34143806625343737], [0.1886615643802483], [0.0, 0.7321485666861673, 0.0], [0.9230607316649082]].jpg"
+    name="dataset/dataset_Face1/[[0.0], [0.468917215516549], [0.4260684038090401], [0.860014741130464], [0.21373140780860697], [0.6505243918326129], [0.28471331005503225], [0.28722312049160587, 0.18813134081249094, 0.3218270993750765], [1.0]].jpg"
+    name="dataset/dataset_Face2/[[0.269745982703994], [0.9708954711405965], [0.5675300198856493], [0.801700046193999], [0.48520543531462124], [0.8935083850894436], [0.40484590010533383], [0.4149604854482285, 0.34577353963294033, 0.0], [1.0]].jpg"
+    
     img=cv2.imread(name)
-    model_path="model/Makeup_Model/MultiFace/model_last.pth"
+    model_path="model/Makeup_Model/MultiFace/2.pth"
     params=main(img,model_path)
     seikai=str2list(Path(name).stem)
 
+
+    opt = Options()
+    img=cv2.imread("unit_test/canmake4/A_in.png")
+    cv2.imwrite("res/res/0_or.png",img)
+
+    print(seikai)
+    make_dict=MakeParams([seikai],"Face")
+    make=Makeup(img,img,opt,name='res')
+    makeup_img=np.uint8(make.test(img,make_dict))[-1]
+    cv2.imwrite("res/res/1_seikai.png",makeup_img)
+
+    print(params)
+    make_dict=MakeParams([params],"Face")
+    make=Makeup(img,img,opt,name='res')
+    makeup_img=np.uint8(make.test(img,make_dict))[-1]
+    cv2.imwrite("res/res/2_predict.png",makeup_img)
+    print("正解:",[round(j,2) for j in seikai ])
+    print("推論",[round(j,2) for j in params ])
+
+def use_best():
+    name="dataset/dataset_Face0/[[0.36956802171659703], [0.5006924544087464], [0.36834583410701216], [0.3904635960359865], [0.24307970985796754], [0.34143806625343737], [0.1886615643802483], [0.0, 0.7321485666861673, 0.0], [0.9230607316649082]].jpg"
+    #name="dataset/dataset_Face1/[[0.0], [0.468917215516549], [0.4260684038090401], [0.860014741130464], [0.21373140780860697], [0.6505243918326129], [0.28471331005503225], [0.28722312049160587, 0.18813134081249094, 0.3218270993750765], [1.0]].jpg"
+    #name="dataset/dataset_Face2/[[0.269745982703994], [0.9708954711405965], [0.5675300198856493], [0.801700046193999], [0.48520543531462124], [0.8935083850894436], [0.40484590010533383], [0.4149604854482285, 0.34577353963294033, 0.0], [1.0]].jpg"
+    
+    img=cv2.imread(name)
+
+    model_paths=Path("model/Makeup_Model/MultiFace/face0")
+    model_paths=list(model_paths.iterdir())
+    paramses=[]
+    for model_path in model_paths:
+        paramses.append(main(img,model_path))
+
+    paramses=np.array(paramses)
+    params=np.median(paramses,axis=0).tolist()
+    
+    seikai=str2list(Path(name).stem)
 
     opt = Options()
     img=cv2.imread("unit_test/canmake4/A_in.png")
@@ -135,6 +174,7 @@ def compire():
 
 
 if __name__ == '__main__':
-    #compire()
-    test()
+    #use_best()
+    compire()
+    #test()
 
