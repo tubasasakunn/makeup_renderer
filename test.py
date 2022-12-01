@@ -140,10 +140,10 @@ def use_best():
     name="dataset/dataset_Face0/[[0.36956802171659703], [0.5006924544087464], [0.36834583410701216], [0.3904635960359865], [0.24307970985796754], [0.34143806625343737], [0.1886615643802483], [0.0, 0.7321485666861673, 0.0], [0.9230607316649082]].jpg"
     #name="dataset/dataset_Face1/[[0.0], [0.468917215516549], [0.4260684038090401], [0.860014741130464], [0.21373140780860697], [0.6505243918326129], [0.28471331005503225], [0.28722312049160587, 0.18813134081249094, 0.3218270993750765], [1.0]].jpg"
     #name="dataset/dataset_Face2/[[0.269745982703994], [0.9708954711405965], [0.5675300198856493], [0.801700046193999], [0.48520543531462124], [0.8935083850894436], [0.40484590010533383], [0.4149604854482285, 0.34577353963294033, 0.0], [1.0]].jpg"
-    
+    name="dataset/dataset_Face0/[[0.292160661763029], [0.4187881164330405], [0.46266458396621213], [0.3529257796961245], [0.1956428723831538], [0.5355802128472543], [0.3693292324649342], [0.17700258485269657, 0.0, 0.23842180065087024], [0.8514836193200658]].jpg"
     img=cv2.imread(name)
 
-    model_paths=Path("model/Makeup_Model/MultiFace/face0")
+    model_paths=Path("model/Makeup_Model/Face0")
     model_paths=list(model_paths.iterdir())
     paramses=[]
     for model_path in model_paths:
@@ -156,25 +156,30 @@ def use_best():
 
     opt = Options()
     img=cv2.imread("unit_test/canmake4/A_in.png")
-    cv2.imwrite("0_or.png",img)
+    cv2.imwrite("res/0_or.png",img)
 
     print(seikai)
     make_dict=MakeParams([seikai],"Face")
     make=Makeup(img,img,opt,name='res')
     makeup_img=np.uint8(make.test(img,make_dict))[-1]
-    cv2.imwrite("1_seikai.png",makeup_img)
+    cv2.imwrite("res/1_seikai.png",makeup_img)
 
     print(params)
     make_dict=MakeParams([params],"Face")
     make=Makeup(img,img,opt,name='res')
     makeup_img=np.uint8(make.test(img,make_dict))[-1]
-    cv2.imwrite("2_predict.png",makeup_img)
+    cv2.imwrite("res/2_predict.png",makeup_img)
+    print("正解:",[round(j,2) for j in seikai ])
+    print("推論",[round(j,2) for j in params ])
+    #print("推論",[round(j,2) for j in paramses[0] ])
+    #print("推論",[round(j,2) for j in paramses[1] ])
+    #print("推論",[round(j,2) for j in paramses[2] ])
 
 
 
 
 if __name__ == '__main__':
-    #use_best()
-    compire()
+    use_best()
+    #compire()
     #test()
 
