@@ -1,7 +1,7 @@
 from re import I
 from sqlite3 import paramstyle
 from wsgiref.simple_server import WSGIRequestHandler
-from cv2 import imread
+from cv2 import imread, imwrite
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -93,11 +93,34 @@ def test():
     
     img=cv2.imread("unit_test/canmake4/B_out.png")
     img=PostProcessing(img)
-    model_paths=Path("model/Makeup_Model/MultiFace")
+    model_paths=Path("model/Makeup_Model/Face0")
+    model_paths=list(model_paths.iterdir())
+    for model_path in model_paths:
+        params.append(main(img,str(model_path)))
+
+    make_dict=MakeParams(params,"Face")
+
+    opt = Options()
+    img=cv2.imread("unit_test/canmake4/A_in.png")
+    make=Makeup(img,img,opt,name='res')
+    makeup_img=np.uint8(make.test(img,make_dict))[-1]
+    cv2.imwrite("aa.png",makeup_img)
+
+def use_best_test():
+    params=[]
+    
+    img=cv2.imread("unit_test/canmake4/B_out.png")
+    img=PostProcessing(img)
+    cv2.imwrite("b.png",img)
+    model_paths=Path("model/Makeup_Model/Multi")
     model_paths=list(model_paths.iterdir())
     for model_path in model_paths:
         print(model_path)
-        params.append(main(img,str(model_path)))
+        if model_path.is_file():
+            continue
+        if len(list(model_path.iterdir()))<3 :
+            continue
+        params.append(use_best(img,str(model_path)))
 
     make_dict=MakeParams(params,"Face")
 
@@ -136,21 +159,15 @@ def compire():
     print("正解:",[round(j,2) for j in seikai ])
     print("推論",[round(j,2) for j in params ])
 
-def use_best():
+def use_best_compire():
     name="dataset/dataset_Face0/[[0.36956802171659703], [0.5006924544087464], [0.36834583410701216], [0.3904635960359865], [0.24307970985796754], [0.34143806625343737], [0.1886615643802483], [0.0, 0.7321485666861673, 0.0], [0.9230607316649082]].jpg"
     #name="dataset/dataset_Face1/[[0.0], [0.468917215516549], [0.4260684038090401], [0.860014741130464], [0.21373140780860697], [0.6505243918326129], [0.28471331005503225], [0.28722312049160587, 0.18813134081249094, 0.3218270993750765], [1.0]].jpg"
     #name="dataset/dataset_Face2/[[0.269745982703994], [0.9708954711405965], [0.5675300198856493], [0.801700046193999], [0.48520543531462124], [0.8935083850894436], [0.40484590010533383], [0.4149604854482285, 0.34577353963294033, 0.0], [1.0]].jpg"
-    name="dataset/dataset_Face0/[[0.292160661763029], [0.4187881164330405], [0.46266458396621213], [0.3529257796961245], [0.1956428723831538], [0.5355802128472543], [0.3693292324649342], [0.17700258485269657, 0.0, 0.23842180065087024], [0.8514836193200658]].jpg"
+    #name="dataset/dataset_Face0/[[0.292160661763029], [0.4187881164330405], [0.46266458396621213], [0.3529257796961245], [0.1956428723831538], [0.5355802128472543], [0.3693292324649342], [0.17700258485269657, 0.0, 0.23842180065087024], [0.8514836193200658]].jpg"
     img=cv2.imread(name)
 
-    model_paths=Path("model/Makeup_Model/Face0")
-    model_paths=list(model_paths.iterdir())
-    paramses=[]
-    for model_path in model_paths:
-        paramses.append(main(img,model_path))
-
-    paramses=np.array(paramses)
-    params=np.median(paramses,axis=0).tolist()
+    path=Path("model/Makeup_Model/Multi/dataset_Face0")
+    params=use_best(img,path)
     
     seikai=str2list(Path(name).stem)
 
@@ -161,25 +178,37 @@ def use_best():
     print(seikai)
     make_dict=MakeParams([seikai],"Face")
     make=Makeup(img,img,opt,name='res')
-    makeup_img=np.uint8(make.test(img,make_dict))[-1]
-    cv2.imwrite("res/1_seikai.png",makeup_img)
+    makeup_imgA=np.uint8(make.test(img,make_dict))[-1]
+    cv2.imwrite("res/1_seikai.png",makeup_imgA)
 
     print(params)
     make_dict=MakeParams([params],"Face")
     make=Makeup(img,img,opt,name='res')
-    makeup_img=np.uint8(make.test(img,make_dict))[-1]
-    cv2.imwrite("res/2_predict.png",makeup_img)
+    makeup_imgB=np.uint8(make.test(img,make_dict))[-1]
+    cv2.imwrite("res/2_predict.png",makeup_imgB)
     print("正解:",[round(j,2) for j in seikai ])
     print("推論",[round(j,2) for j in params ])
-    #print("推論",[round(j,2) for j in paramses[0] ])
-    #print("推論",[round(j,2) for j in paramses[1] ])
-    #print("推論",[round(j,2) for j in paramses[2] ])
+    name="res/"+"正解:"+str([round(j,2) for j in seikai ])+"推論"+str([round(j,2) for j in params ])+".png"
+    cv2.imwrite(name,np.hstack([img,makeup_imgA,makeup_imgB]))
+
+def use_best(img,path):
+    model_paths=Path(path)
+    model_paths=list(model_paths.iterdir())
+    paramses=[]
+    for model_path in model_paths:
+        paramses.append(main(img,model_path))
+
+    paramses=np.array(paramses)
+    params=np.median(paramses,axis=0).tolist()
+
+    return params
 
 
 
 
 if __name__ == '__main__':
-    use_best()
+    #use_best_compire()
+    use_best_test()
     #compire()
     #test()
 
