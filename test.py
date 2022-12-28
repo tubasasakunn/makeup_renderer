@@ -20,7 +20,7 @@ from make_dataset import PostProcessing
 from torchvision.utils import save_image
 import train
 import model
-
+import random
 class Options(object):
     make_list=["Foundation","Lipstick","Eye","Face"]
     name='test_ref'
@@ -91,83 +91,69 @@ def str2list(moji):
 def test():
     params=[]
     
-    img=cv2.imread("unit_test/canmake4/B_out.png")
-    img=PostProcessing(img)
-    model_paths=Path("model/Makeup_Model/Face0")
-    model_paths=list(model_paths.iterdir())
-    for model_path in model_paths:
-        params.append(main(img,str(model_path)))
 
-    make_dict=MakeParams(params,"Face")
 
-    opt = Options()
-    img=cv2.imread("unit_test/canmake4/A_in.png")
-    make=Makeup(img,img,opt,name='res')
-    makeup_img=np.uint8(make.test(img,make_dict))[-1]
-    cv2.imwrite("aa.png",makeup_img)
+    img_paths=Path("test_img/virtual_makeup")
+    img_paths=list(img_paths.iterdir())
+    for path in img_paths:
+        inimg=cv2.imread(str(path/"B_out.png"))
+        outimg=cv2.imread(str(path/"A_in.png"))
+
+        inimg_pro=PostProcessing(inimg)
+        model_paths=Path("model/Makeup_Model/Face")
+        model_paths=list(model_paths.iterdir())
+        for model_path in model_paths:
+            print(model_path)
+            if model_path.suffix==".pth":
+                params.append(main(inimg_pro,str(model_path)))
+
+        make_dict=MakeParams(params,"Face")
+
+        opt = Options()
+        make=Makeup(outimg,outimg,opt,name='res')
+        makeup_img=np.uint8(make.test(outimg,make_dict))[-1]
+        cv2.imwrite("res/{}.png".format(path.name),np.hstack([inimg,outimg,makeup_img]))
 
 def use_best_test():
     params=[]
     
-    img=cv2.imread("unit_test/canmake4/B_out.png")
-    img=PostProcessing(img)
-    cv2.imwrite("b.png",img)
-    model_paths=Path("model/Makeup_Model/Multi")
-    model_paths=list(model_paths.iterdir())
-    for model_path in model_paths:
-        print(model_path)
-        if model_path.is_file():
-            continue
-        if len(list(model_path.iterdir()))<3 :
-            continue
-        params.append(use_best(img,str(model_path)))
 
-    make_dict=MakeParams(params,"Face")
 
-    opt = Options()
-    img=cv2.imread("unit_test/canmake4/A_in.png")
-    make=Makeup(img,img,opt,name='res')
-    makeup_img=np.uint8(make.test(img,make_dict))[-1]
-    cv2.imwrite("aa.png",makeup_img)
+    img_paths=Path("test_img/virtual_makeup")
+    img_paths=list(img_paths.iterdir())
+    for path in img_paths:
+        inimg=cv2.imread(str(path/"B_out.png"))
+        outimg=cv2.imread(str(path/"A_in.png"))
+
+        inimg_pro=PostProcessing(inimg)
+        model_paths=Path("model/Makeup_Model/Multi")
+        model_paths=list(model_paths.iterdir())
+        for model_path in model_paths:
+            print(model_path)
+            if model_path.is_file():
+                continue
+            if len(list(model_path.iterdir()))<3 :
+                continue
+            params.append(use_best(inimg_pro,str(model_path)))
+
+        make_dict=MakeParams(params,"Face")
+
+        opt = Options()
+        make=Makeup(outimg,outimg,opt,name='res')
+        makeup_img=np.uint8(make.test(outimg,make_dict))[-1]
+        cv2.imwrite("res/{}.png".format(path.name),np.hstack([inimg,outimg,makeup_img]))
 
 def compire():
-    name="dataset/dataset_Face0/[[0.36956802171659703], [0.5006924544087464], [0.36834583410701216], [0.3904635960359865], [0.24307970985796754], [0.34143806625343737], [0.1886615643802483], [0.0, 0.7321485666861673, 0.0], [0.9230607316649082]].jpg"
-    name="dataset/dataset_Face1/[[0.0], [0.468917215516549], [0.4260684038090401], [0.860014741130464], [0.21373140780860697], [0.6505243918326129], [0.28471331005503225], [0.28722312049160587, 0.18813134081249094, 0.3218270993750765], [1.0]].jpg"
-    name="dataset/dataset_Face2/[[0.269745982703994], [0.9708954711405965], [0.5675300198856493], [0.801700046193999], [0.48520543531462124], [0.8935083850894436], [0.40484590010533383], [0.4149604854482285, 0.34577353963294033, 0.0], [1.0]].jpg"
-    
-    img=cv2.imread(name)
-    model_path="model/Makeup_Model/MultiFace/2.pth"
-    params=main(img,model_path)
-    seikai=str2list(Path(name).stem)
+    faces=list(Path("validation").iterdir())
+    #faces=list(Path("dataset").iterdir())
+    face=random.choice(faces)
 
+    name=random.choice(list(face.iterdir()))
+    img_in=cv2.imread(str(name))
 
-    opt = Options()
-    img=cv2.imread("unit_test/canmake4/A_in.png")
-    cv2.imwrite("res/res/0_or.png",img)
-
-    print(seikai)
-    make_dict=MakeParams([seikai],"Face")
-    make=Makeup(img,img,opt,name='res')
-    makeup_img=np.uint8(make.test(img,make_dict))[-1]
-    cv2.imwrite("res/res/1_seikai.png",makeup_img)
-
-    print(params)
-    make_dict=MakeParams([params],"Face")
-    make=Makeup(img,img,opt,name='res')
-    makeup_img=np.uint8(make.test(img,make_dict))[-1]
-    cv2.imwrite("res/res/2_predict.png",makeup_img)
-    print("正解:",[round(j,2) for j in seikai ])
-    print("推論",[round(j,2) for j in params ])
-
-def use_best_compire():
-    name="dataset/dataset_Face0/[[0.36956802171659703], [0.5006924544087464], [0.36834583410701216], [0.3904635960359865], [0.24307970985796754], [0.34143806625343737], [0.1886615643802483], [0.0, 0.7321485666861673, 0.0], [0.9230607316649082]].jpg"
-    #name="dataset/dataset_Face1/[[0.0], [0.468917215516549], [0.4260684038090401], [0.860014741130464], [0.21373140780860697], [0.6505243918326129], [0.28471331005503225], [0.28722312049160587, 0.18813134081249094, 0.3218270993750765], [1.0]].jpg"
-    #name="dataset/dataset_Face2/[[0.269745982703994], [0.9708954711405965], [0.5675300198856493], [0.801700046193999], [0.48520543531462124], [0.8935083850894436], [0.40484590010533383], [0.4149604854482285, 0.34577353963294033, 0.0], [1.0]].jpg"
-    #name="dataset/dataset_Face0/[[0.292160661763029], [0.4187881164330405], [0.46266458396621213], [0.3529257796961245], [0.1956428723831538], [0.5355802128472543], [0.3693292324649342], [0.17700258485269657, 0.0, 0.23842180065087024], [0.8514836193200658]].jpg"
-    img=cv2.imread(name)
-
-    path=Path("model/Makeup_Model/Multi/dataset_Face0")
-    params=use_best(img,path)
+    path=Path("model/Makeup_Model/Face")/(face.name+'.pth')
+    print(face.name)
+    params=main(img_in,path)
     
     seikai=str2list(Path(name).stem)
 
@@ -186,10 +172,48 @@ def use_best_compire():
     make=Makeup(img,img,opt,name='res')
     makeup_imgB=np.uint8(make.test(img,make_dict))[-1]
     cv2.imwrite("res/2_predict.png",makeup_imgB)
+    print("useFace",face.name)
     print("正解:",[round(j,2) for j in seikai ])
     print("推論",[round(j,2) for j in params ])
     name="res/"+"正解:"+str([round(j,2) for j in seikai ])+"推論"+str([round(j,2) for j in params ])+".png"
-    cv2.imwrite(name,np.hstack([img,makeup_imgA,makeup_imgB]))
+    img_in=cv2.resize(img_in,dsize=img.shape[:2])
+    cv2.imwrite(name,np.hstack([img_in,img,makeup_imgA,makeup_imgB]))
+
+def use_best_compire():
+      
+    faces=list(Path("validation").iterdir())
+    #faces=list(Path("dataset").iterdir())
+    face=random.choice(faces)
+
+    name=random.choice(list(face.iterdir()))
+    img_in=cv2.imread(str(name))
+
+    path=Path("model/Makeup_Model/Multi")/face.name
+    params=use_best(img_in,path)
+    
+    seikai=str2list(Path(name).stem)
+
+    opt = Options()
+    img=cv2.imread("unit_test/canmake4/A_in.png")
+    cv2.imwrite("res/0_or.png",img)
+
+    print(seikai)
+    make_dict=MakeParams([seikai],"Face")
+    make=Makeup(img,img,opt,name='res')
+    makeup_imgA=np.uint8(make.test(img,make_dict))[-1]
+    cv2.imwrite("res/1_seikai.png",makeup_imgA)
+
+    print(params)
+    make_dict=MakeParams([params],"Face")
+    make=Makeup(img,img,opt,name='res')
+    makeup_imgB=np.uint8(make.test(img,make_dict))[-1]
+    cv2.imwrite("res/2_predict.png",makeup_imgB)
+    print("useFace",face.name)
+    print("正解:",[round(j,2) for j in seikai ])
+    print("推論",[round(j,2) for j in params ])
+    name="res/"+"正解:"+str([round(j,2) for j in seikai ])+"推論"+str([round(j,2) for j in params ])+".png"
+    img_in=cv2.resize(img_in,dsize=img.shape[:2])
+    cv2.imwrite(name,np.hstack([img_in,img,makeup_imgA,makeup_imgB]))
 
 def use_best(img,path):
     model_paths=Path(path)
@@ -208,7 +232,8 @@ def use_best(img,path):
 
 if __name__ == '__main__':
     #use_best_compire()
-    use_best_test()
-    #compire()
-    #test()
+    #use_best_test()
+    #for i in range(10):
+    #    compire()
+    test()
 

@@ -79,14 +79,20 @@ def make_datasets(name,num,preset):
     random.shuffle(paths)
     for i in tqdm(range(num)):
         try:
-            print(preset)
-            preset_tmp=copy.deepcopy(preset)
-            make_dict=MakeParams(preset_tmp,"Face")
             img_path=paths[i%len(paths)]
             img=cv2.imread(str(img_path))
+
+            #別のメイク追加
+            preset_i=copy.deepcopy(random.choice(presets))
+            make_dict=MakeParams(preset_i,"Face")
+            make=Makeup(img,img,opt,name='res')
+            img=np.uint8(make.test(img,make_dict))[-1]
+
+            preset_tmp=copy.deepcopy(preset)
+            make_dict=MakeParams(preset_tmp,"Face")
             make=Makeup(img,img,opt,name='res')
             makeup_img=np.uint8(make.test(img,make_dict))[-1]
-            print(makeup_img.shape)
+
             makeup_img=PostProcessing(makeup_img)
             cv2.imwrite(str(name/(str(preset_tmp)+'.jpg')),makeup_img)
         except:
@@ -94,4 +100,4 @@ def make_datasets(name,num,preset):
 
 if __name__ == '__main__':
     for i,preset in enumerate(presets):
-        make_datasets("dataset/dataset_Face%d"%(i),1000,preset)
+        make_datasets("ComplexDataset/dataset_Face%d"%(i),1000,preset)

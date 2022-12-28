@@ -10,6 +10,8 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 import model
 
+init_dir=Path("result20221223")
+
 class BaseModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -79,6 +81,7 @@ def main(dataset_path,max_epoch=2000,name="test"):
     psgan_net=model.Generator().to(device)
     psgan_net.load_state_dict(torch.load("model/G.pth"))
     net=BaseModel().to(device)
+    net.load_state_dict(torch.load(str(init_dir/Path(name).name/"log"/"model_last.pth")))
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
     criterion = nn.MSELoss()
     writer = SummaryWriter(str(name/"log"))
